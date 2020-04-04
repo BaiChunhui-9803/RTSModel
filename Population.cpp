@@ -113,11 +113,9 @@ void Initialize()//随机初始化种群，得到第一代种群
             Auto_Rand_Unit();//在二维容器中随机生成Po_Size*De_Variable个单元
         }
         unit1_2dmap.push_back(unit1);
-        std::cout << "Indivi[" << i << "] is generated." << endl;
         unit1.clear();
         Clear_Map_unit1();
     }
-    std::cout << "All random units are generated." << endl;
     //循环结束时，所有随机单元就保存在unit1_2dmap中
 
     //生成对象（染色体）并加入到初始种群中
@@ -130,12 +128,10 @@ void Initialize()//随机初始化种群，得到第一代种群
         Unit* p_unit = &(unit1.at(0));
         Individual Indivi(p_unit);//生成一个对象（染色体）
         nowpopulation.push_back(Indivi);//加入到种群population中
-        std::cout << "Indivi[" << i << "] is pushed into nowpopulation." << endl;
     }
-    std::cout << "The initial population is generated." << endl;
     //循环结束时，初始种群保存在nowpopulation中
 
-    for (int i = 0; i < Po_Size; i++)
+    /*for (int i = 0; i < Po_Size; i++)
     {
         std::cout << "Indivi[" << i << "]:" << endl;
         for (int j = 0; j < Unit_Size; j++)
@@ -145,7 +141,7 @@ void Initialize()//随机初始化种群，得到第一代种群
             std::cout << '\t' << nowpopulation.at(i).Chrom.at(j).m_Ypos;
             std::cout << '\t' << nowpopulation.at(i).Chrom.at(j).m_Arm<<std::endl;
         }
-    }
+    }*/
 }
 
 //Individual类实现
@@ -214,7 +210,6 @@ bool No_Unit_In_Distance() {
     }
 
     if (num == Unit_Size* Unit_Size) {
-        cout << "No unit in distance." << endl;
         return 1;
     }
     else
@@ -375,7 +370,6 @@ double Start_Game(const int indivi_pos) {
     while (1) {
         k += 10;
         if (No_Unit_In_Distance() || Unit1_Over(vp_u1) || Unit2_Over(vp_u2)) {
-            cout << "Indivi[" << indivi_pos << "]Game Over" << endl;
             break;
         }
 
@@ -434,7 +428,6 @@ double Start_Game(const int indivi_pos) {
     
 }
 
-
 void Cacula_Fitness()//计算个体的适应值
 {
     double fitness = 0;//临时适应值
@@ -448,8 +441,7 @@ void Cacula_Fitness()//计算个体的适应值
     }
 }
 
-
-void CaculaFitnessProba()//计算适应值概率
+void Cacula_FitnessProba()//计算适应值概率
 {
     double sum = 0;//适应值累加器
     double temp = 0;
@@ -465,18 +457,6 @@ void CaculaFitnessProba()//计算适应值概率
 }
 
 
-//void CalculaSumFitness()//计算累加个体概率
-//{
-//    double summation = 0;//累加器
-//    for (int k = 0; k < Po_Size; k++)
-//    {
-//        summation += nowpopulation.at(k).GetFitnessProba();
-//        nowpopulation.at(k).ChaSumFitness(summation);//当前累加结果赋值
-//    }
-//}
-
-
-
 void Individual::printout(vector<Individual>::iterator itb, vector<Individual>::iterator ite) {
     int i = 0;
     for (auto it = itb; it != ite; it++, i++) {
@@ -486,7 +466,25 @@ void Individual::printout(vector<Individual>::iterator itb, vector<Individual>::
     }
 }
 
+//获取种群中最优的适应值
+double GetBestFitness() {
+    double best = 0;
+    double get = 0;
+    for (int i = 0; i < Po_Size; i++) {
+        get = nowpopulation.at(i).GetFitness();
+        if (get >= best)best = get;
+    }
+    return best;
+}
 
+//获取种群中适应值的最大值
+double GetSumFitness() {
+    double sum = 0;
+    for (int i = 0; i < Po_Size; i++) {
+        sum+= nowpopulation.at(i).GetFitness();
+    }
+    return sum;
+}
 
 void pp() {
     Update_PM_Wit();
@@ -494,17 +492,17 @@ void pp() {
     for (int i = 0; i < X_len;i++) {
         for (int j = 0; j < Y_len; j++) {
             cout << "Proba_Matrix[" << i << "][" << j << "]:" << endl;
-            cout << '\t' << "Arm1_Weight=" << left << setw(5) << Proba_Matrix[i][j].Arm1_Weight;
-            cout << '\t' << "Arm2_Weight=" << left << setw(5) << Proba_Matrix[i][j].Arm2_Weight;
-            cout << '\t' << "Arm3_Weight=" << left << setw(5) << Proba_Matrix[i][j].Arm3_Weight << endl;
+            cout << '\t' << "Arm1_Weight=" << left << setw(8) << Proba_Matrix[i][j].Arm1_Weight;
+            cout << '\t' << "Arm2_Weight=" << left << setw(8) << Proba_Matrix[i][j].Arm2_Weight;
+            cout << '\t' << "Arm3_Weight=" << left << setw(8) << Proba_Matrix[i][j].Arm3_Weight << endl;
 
-            cout << '\t' << "Arm1_Wit_Pro=" << left << setw(5) << Proba_Matrix_Wit[i][j].Arm1_Weight;
-            cout << '\t' << "Arm2_Wit_Pro=" << left << setw(5) << Proba_Matrix_Wit[i][j].Arm2_Weight;
-            cout << '\t' << "Arm3_Wit_Pro=" << left << setw(5) << Proba_Matrix_Wit[i][j].Arm3_Weight << endl;
+            cout << '\t' << "Arm1_WitPro=" << left << setw(8) << Proba_Matrix_Wit[i][j].Arm1_Weight;
+            cout << '\t' << "Arm2_WitPro=" << left << setw(8) << Proba_Matrix_Wit[i][j].Arm2_Weight;
+            cout << '\t' << "Arm3_WitPro=" << left << setw(8) << Proba_Matrix_Wit[i][j].Arm3_Weight << endl;
 
-            cout << '\t' << "Arm1_Wit_Sum=" << left << setw(5) << Proba_Matrix_Sum[i][j].Arm1_Weight;
-            cout << '\t' << "Arm2_Wit_Sum=" << left << setw(5) << Proba_Matrix_Sum[i][j].Arm2_Weight;
-            cout << '\t' << "Arm3_Wit_Sum=" << left << setw(5) << Proba_Matrix_Sum[i][j].Arm3_Weight << endl;
+            cout << '\t' << "Arm1_WitSum=" << left << setw(8) << Proba_Matrix_Sum[i][j].Arm1_Weight;
+            cout << '\t' << "Arm2_WitSum=" << left << setw(8) << Proba_Matrix_Sum[i][j].Arm2_Weight;
+            cout << '\t' << "Arm3_Wit_um=" << left << setw(8) << Proba_Matrix_Sum[i][j].Arm3_Weight << endl;
         }
     }
 }
@@ -513,42 +511,104 @@ void pp() {
 
 
 
-//void seclect() //种群选择
-//{
-//    //随机生生成0到1的小数
-//    double array[Po_Size];//随机数保存变量
-//    default_random_engine e(time(0));//引擎，生成随机序列
-//    uniform_real_distribution<double> u(0.0, 1.0); //分布
-//    for (int i = 0; i < Po_Size; i++)
-//        array[i] = u(e);
-//
-//    //轮盘进行选择
-//    for (int j = 0; j < Po_Size; j++)
-//    {
-//        for (int i = 1; i < Po_Size; i++)
-//        {
-//            if (array[j] < nowpopulation.at(i - 1).GetSumFitness())
-//            {
-//                midpopulation.push_back(nowpopulation.at(i - 1));//加入到中间种群
-//            }
-//            if (array[j] >= nowpopulation.at(i - 1).GetSumFitness() && array[j] <= nowpopulation.at(i).GetSumFitness())
-//            {
-//                midpopulation.push_back(nowpopulation.at(i));//加入到中间种群
-//            }
-//        }
-//    }
-//    nowpopulation.clear();//清空nowpopulation
-//    
-//    
-//}
+void seclect() //种群选择
+{
+    //随机生生成0到1的小数
+    double array[Po_Size][Unit_Size];//随机数保存变量
+    default_random_engine e(time(0));//引擎，生成随机序列
+    uniform_real_distribution<double> u(0.0, 1.0); //分布
+    for (int i = 0; i < Po_Size; i++)
+        for (int j = 0; j < Unit_Size; j++)
+            array[i][j] = u(e);
+
+    unit1_2dmap.clear();
+    unit1.clear();
+
+    Update_PM_Wit();
+    Update_PM_Sum();
+
+    for (int i = 0; i < Po_Size; i++) {
+        for (int j = 0; j < Unit_Size; j++) {
+            for (int m = 0; m < X_len; m++) {
+                for (int n = 0; n < Y_len; n++) {
+                    if (array[i][j] >= 0 && array[i][j] <= Proba_Matrix_Sum[m][n].Arm1_Weight) {
+                        if (CanAddUnit(m, n)) {
+                            AddUnit(m, n, 1);
+                            Unit U1(m, n, 1, 1);
+                            unit1.push_back(U1);
+                        }
+                        else 
+                            Auto_Rand_Unit();
+                        m = 19;
+                        break;
+                    }
+                    
+                    if (array[i][j] >= Proba_Matrix_Sum[m][n].Arm1_Weight && array[i][j] <= Proba_Matrix_Sum[m][n].Arm2_Weight) {
+                        if (CanAddUnit(m, n)) {
+                            AddUnit(m, n, 1);
+                            Unit U1(m, n, 1, 2);
+                            unit1.push_back(U1);
+                        }
+                        else
+                            Auto_Rand_Unit();
+                        m = 19;
+                        break;
+                    }
+
+                    if (array[i][j] >= Proba_Matrix_Sum[m][n].Arm2_Weight && array[i][j] <= Proba_Matrix_Sum[m][n].Arm3_Weight) {
+                        if (CanAddUnit(m, n)) {
+                            AddUnit(m, n, 1);
+                            Unit U1(m, n, 1, 3);
+                            unit1.push_back(U1);
+                        }
+                        else
+                            Auto_Rand_Unit();
+                        m = 19;
+                        break;
+                    }
+
+                    if (n != 14 && array[i][j] >= Proba_Matrix_Sum[m][n].Arm3_Weight && array[i][j] <= Proba_Matrix_Sum[m][n + 1].Arm1_Weight) {
+                        if (CanAddUnit(m, n + 1)) {
+                            AddUnit(m, n + 1, 1);
+                            Unit U1(m, n + 1, 1, 1);
+                            unit1.push_back(U1);
+                        }
+                        else
+                            Auto_Rand_Unit();
+                        m = 19;
+                        break;
+                    }
 
 
+                    if (m != 19 && n == 14 && array[i][j] >= Proba_Matrix_Sum[m][n].Arm3_Weight && array[i][j] <= Proba_Matrix_Sum[m + 1][0].Arm1_Weight) {
+                        if (CanAddUnit(m + 1, 0)) {
+                            AddUnit(m + 1, 0, 1);
+                            Unit U1(m + 1, 0, 1, 1);
+                            unit1.push_back(U1);
+                        }
+                        else
+                            Auto_Rand_Unit();
+                        m = 19;
+                        break;
+                    }
+                }
+            }
+        }
+        Clear_Map_unit1();
+        Unit* p_unit = &(unit1.at(0));
+        Individual Indivi(p_unit);
+        midpopulation.push_back(Indivi);
+        unit1.clear();
+    }
 
-
-
-
-
-
+    for (int i = 0; i < Po_Size; i++) {
+        for (int j = 0; j < Unit_Size; j++) {
+            nowpopulation.at(i).Chrom.at(j) = midpopulation.at(i).Chrom.at(j);
+        }
+    }
+    midpopulation.clear();
+    
+}
 
 double Scand() //随机产生0到1的小数
 {

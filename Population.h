@@ -17,9 +17,8 @@ const int Po_Size = 50;//种群规模
 const int Ev_Algebra = 500;//进化代数
 const double Ov_Probability = 0.850; //交叉概率,交叉概率用于判断两两个体是否需要交叉
 const double Va_Probability = 0.050;//变异概率,变异概率用于判断任一个体是否需要变异
-const int Unit_Size = 3;//智能体的个数
-const int length_4 = 4;//用4位二进制编码
-const int length_2 = 2;//用2位二进制编码
+const int Unit_Size = 10;//智能体的个数
+
 
 
 struct Unit_Arm_Inf //定义兵种信息
@@ -94,10 +93,11 @@ double Start_Game(const int indivi_pos);//模拟游戏过程
 void Cacula_Fitness();//计算个体的适应值
 
 
-void CaculaFitnessProba();//计算个体的适应值概率
+void Cacula_FitnessProba();//计算个体的适应值概率
 void seclect();//种群选择
 double Scand();//随机产生0到49的随机整数
-
+double GetBestFitness();//获取种群中最优的适应值
+double GetSumFitness();//获取种群中适应值的最大值
 
 void pp();
 

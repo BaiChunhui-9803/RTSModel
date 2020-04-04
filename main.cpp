@@ -18,17 +18,18 @@ int main()
 	
 	Initialize();
 	Cacula_Fitness();
-	CaculaFitnessProba();
+	Cacula_FitnessProba();
 	nowpopulation.at(0).printout(nowpopulation.begin(), nowpopulation.end());
-	pp();
-	/*for (i = 0; i < 100; i++) {
-		seclect();
-		CaculaFitnessProba();
-		CalculaSumFitness();
-		cout << i << endl;
-	}
 	
-	nowpopulation.at(0).printout(nowpopulation.begin(), nowpopulation.end());*/
-
+	for (i = 0; i < 500; i++) {
+		seclect();
+		Cacula_Fitness();
+		Cacula_FitnessProba();
+		double best = GetBestFitness();
+		double sum = GetSumFitness();
+		cout << i << " sum:" << left << setw(5) <<sum << " best:" << left << setw(5) << best << endl;
+	}
+	pp();
+	nowpopulation.at(0).printout(nowpopulation.begin(), nowpopulation.end());
 }
 
