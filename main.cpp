@@ -18,13 +18,12 @@ int main()
 	
 	Initialize();
 	Cacula_Fitness();
-	CaculaReFitness();
-	CalculaSumFitness();
+	CaculaFitnessProba();
 	nowpopulation.at(0).printout(nowpopulation.begin(), nowpopulation.end());
-	
+	pp();
 	/*for (i = 0; i < 100; i++) {
 		seclect();
-		CaculaReFitness();
+		CaculaFitnessProba();
 		CalculaSumFitness();
 		cout << i << endl;
 	}

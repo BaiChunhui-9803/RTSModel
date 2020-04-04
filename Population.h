@@ -50,21 +50,17 @@ class Individual //定义个体类
 {
 private:
     double Fitness;//适应值
-    double ReFitness;//适应值概率
-    double SumFitness;//累加概率，为轮盘转做准备
+    double Fitness_Proba;//适应值概率
+    
 
 public:
     vector<Unit> Chrom;//存放当前种群中各个个体，即染色体
-    double Probability_Matrix[X_len][Y_len];//概率矩阵，反应单元的质量
+    
     Individual(Unit* p_unit);//构造函数
-
-
     void ChaFitness(const double m_fitness);//修改适应值
-    void ChaReFitness(const double m_ReFitness);//修改适应值概率
-    void ChaSumFitness(const double m_SumFitness);//修改累加概率
+    void ChaFitnessProba(const double m_Fitness_Proba);//修改适应值概率
     double GetFitness()const;//获取适应值
-    double GetReFitness()const;//获取适应值概率
-    double GetSumFitness()const;//获取累加概率
+    double GetFitnessProba()const;//获取适应值概率
     void printout(vector<Individual>::iterator itb, vector<Individual>::iterator ite);
 };
 
@@ -72,14 +68,21 @@ void Auto_Rand_Unit();//随机生成Unit单元到临时容器unit1
 void Initialize();//随机初始化种群，得到第一代个体 
 void Auto_Rand_Unit_2();//随机生成Unit单元到容器unit2
 
+struct Proba_Matrix_Struct {
+    double Arm1_Weight;
+    double Arm2_Weight;
+    double Arm3_Weight;
+};
 
 struct Fitness_Map_Unit {
     double Unit_Distance;
     int Attack_Proba;
-
-
 };
 
+void Initial_Proba_Matrix();//初始化概率矩阵
+void Update_PM_Wit();//更新概率矩阵的概率
+void Update_PM_Sum();//更新概率矩阵的累加概率
+void Add_Proba_Matrix(Unit* p_unit);//添加概率矩阵中某智能体的权值，其值与智能体累计造成伤害有关
 bool No_Unit_In_Distance();
 void Clear_Fitness_Map_Unit();
 void Cacula_Unit_Distance(const int indivi_pos);//计算unit1[i]到unit2[j]的距离
@@ -91,13 +94,12 @@ double Start_Game(const int indivi_pos);//模拟游戏过程
 void Cacula_Fitness();//计算个体的适应值
 
 
-void CaculaReFitness();//计算个体的适应值概率
-void CalculaSumFitness();//计算累加个体概率
+void CaculaFitnessProba();//计算个体的适应值概率
 void seclect();//种群选择
 double Scand();//随机产生0到49的随机整数
 
 
-
+void pp();
 
 //void crossing();//杂交
 //void variating();//变异

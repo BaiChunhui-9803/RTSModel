@@ -3,9 +3,9 @@
 #include "Population.h"
 #include "GameRule.h" 
 
-vector<Unit_Arm_Inf> Arm1 = { {100,12,5,150} };//兵种1：忍耐度100/攻击力12/攻击距离5/攻击间隔150
+vector<Unit_Arm_Inf> Arm1 = { {150,10,2,100} };//兵种1：忍耐度150/攻击力10/攻击距离2/攻击间隔100
 vector<Unit_Arm_Inf> Arm2 = { {120,15,2,120} };//兵种2：忍耐度120/攻击力15/攻击距离2/攻击间隔120
-vector<Unit_Arm_Inf> Arm3 = { {150,10,2,100} };//兵种3：忍耐度150/攻击力10/攻击距离2/攻击间隔100
+vector<Unit_Arm_Inf> Arm3 = { {100,12,5,150} };//兵种3：忍耐度100/攻击力12/攻击距离5/攻击间隔150
 
 //自动添加Unit类结点中的兵种信息
 void Unit::Auto_Add_UnitInf(const int arm_gudge) {
@@ -56,10 +56,10 @@ Unit::Unit(int xpos, int ypos, int state, int arm) {
 //随机生成Unit单元到临时容器unit1
 void Auto_Rand_Unit() {
     do {
-        int x_rand = rand() % (X_len + 1);
-        int y_rand = rand() % (Y_len + 1);
+        int x_rand = rand() % X_len;
+        int y_rand = rand() % Y_len;
         int state = 1;
-        int arm_rand = rand() % 4;
+        int arm_rand = rand() % 10;
         if (CanAddUnit(x_rand, y_rand)) {
             AddUnit(x_rand, y_rand, 1);
             Unit U1_rand(x_rand, y_rand, state, arm_rand);
@@ -72,10 +72,10 @@ void Auto_Rand_Unit() {
 //随机生成Unit单元到容器unit2
 void Auto_Rand_Unit_2() {
     do {
-        int x_rand = rand() % (X_len + 1);
-        int y_rand = rand() % (Y_len + 1);
+        int x_rand = rand() % X_len;
+        int y_rand = rand() % Y_len;
         int state = 2;
-        int arm_rand = rand() % 4;
+        int arm_rand = rand() % 10;
         if (CanAddUnit(x_rand, y_rand)) {
             AddUnit(x_rand, y_rand, 2);
             Unit U2_rand(x_rand, y_rand, state, arm_rand);
@@ -92,6 +92,7 @@ vector<Individual> nextpopulation;//P(t+1)种群
 //遗传算法的准备工作
 void Initialize()//随机初始化种群，得到第一代种群
 {
+    Initial_Proba_Matrix();
     srand((unsigned)time(NULL));
     for (int i = 0; i < Unit_Size; i++) {
         Auto_Rand_Unit_2();
@@ -166,8 +167,7 @@ Individual::Individual(Unit* p_unit)//构造函数
     unit1.clear();
     //初始化时默认适应值等值为0
     this->Fitness = 0;
-    this->ReFitness = 0;
-    this->SumFitness = 0;
+    this->Fitness_Proba = 0;
 }
 
 
@@ -176,26 +176,19 @@ double Individual::GetFitness()const//获取适应值
 {
     return Fitness;
 }
-double Individual::GetReFitness()const //获取适应值概率
+double Individual::GetFitnessProba()const //获取适应值概率
 {
-    return ReFitness;
-}
-double Individual::GetSumFitness()const//获取累加概率
-{
-    return SumFitness;
+    return Fitness_Proba;
 }
 void Individual::ChaFitness(const double m_fitness)//修改适应值
 {
     this->Fitness = m_fitness;
 }
-void Individual::ChaReFitness(const double m_ReFitness)//修改适应值概率
+void Individual::ChaFitnessProba(const double m_ReFitness)//修改适应值概率
 {
-    this->ReFitness = m_ReFitness;
+    this->Fitness_Proba = m_ReFitness;
 }
-void Individual::ChaSumFitness(const double m_SumFitness)//修改累加概率
-{
-    this->SumFitness = m_SumFitness;
-}
+
 
 
 
@@ -237,7 +230,7 @@ void Cacula_Unit_Distance(const int indivi_pos) {
             double u1_ypos = nowpopulation.at(indivi_pos).Chrom.at(i).m_Ypos;
             double u2_xpos = unit2.at(j).m_Xpos;
             double u2_ypos = unit2.at(j).m_Ypos;
-            Cacula[i][j].Unit_Distance = pow(abs(u1_xpos - u2_xpos), 2);
+            Cacula[i][j].Unit_Distance = sqrt(pow(abs(u1_xpos - u2_xpos), 2)+ pow(abs(u1_ypos - u2_ypos), 2));
         }
     }
 }
@@ -247,7 +240,7 @@ void Cacula_Attack_Proba(const int indivi_pos) {
     
     for (int i = 0; i < Unit_Size; i++) {
         for (int j = 0; j < Unit_Size; j++) {
-            if (nowpopulation.at(indivi_pos).Chrom.at(i).m_Attack_Distance >= Cacula[i][j].Unit_Distance) {
+            if (double(nowpopulation.at(indivi_pos).Chrom.at(i).m_Attack_Distance) >= Cacula[i][j].Unit_Distance) {
                 Cacula[i][j].Attack_Proba++;
                 Can_ATK_Num[j]++;
             }
@@ -271,6 +264,87 @@ int Pick_Which_To_ATK(const int unit_pos) {
     return -1;
 }
 
+Proba_Matrix_Struct Proba_Matrix[X_len][Y_len];//概率矩阵，反应单元的质量
+Proba_Matrix_Struct Proba_Matrix_Wit[X_len][Y_len];//概率矩阵的概率
+Proba_Matrix_Struct Proba_Matrix_Sum[X_len][Y_len];//概率矩阵的累加概率
+
+//初始化概率矩阵
+void Initial_Proba_Matrix() {
+
+    for (int i = 0; i < X_len; i++) {
+        for (int j = 0; j < Y_len; j++) {
+            Proba_Matrix[i][j].Arm1_Weight = 0;
+            Proba_Matrix[i][j].Arm2_Weight = 0;
+            Proba_Matrix[i][j].Arm3_Weight = 0;
+        }
+    }
+}
+
+//添加概率矩阵中某智能体的权值，其值与智能体累计造成伤害有关
+void Add_Proba_Matrix(Unit* p_unit) {
+    switch (p_unit->m_Arm) {
+    case 1:case 4:case 7:
+        Proba_Matrix[p_unit->m_Xpos][p_unit->m_Ypos].Arm1_Weight += p_unit->m_Attack_Damage;
+        break;
+    case 2:case 5:case 8:
+        Proba_Matrix[p_unit->m_Xpos][p_unit->m_Ypos].Arm2_Weight += p_unit->m_Attack_Damage;
+        break;
+    case 0:case 3:case 6:case 9:
+        Proba_Matrix[p_unit->m_Xpos][p_unit->m_Ypos].Arm3_Weight += p_unit->m_Attack_Damage;
+        break;
+    }
+    
+}
+
+//更新概率矩阵的概率
+void Update_PM_Wit()
+{
+    double sum = 0;//概率累加器
+
+    for (int i = 0; i < X_len; i++)//计算概率矩阵的概率之和
+    {
+        for (int j = 0; j < Y_len; j++)
+        {
+            Proba_Matrix_Struct* p_pm = &Proba_Matrix[i][j];
+            sum += double(p_pm->Arm1_Weight) + double(p_pm->Arm2_Weight) + double(p_pm->Arm3_Weight);
+        }
+    }
+        
+    for (int i = 0; i < X_len; i++)
+    {
+        for (int j = 0; j < Y_len; j++)
+        {
+            Proba_Matrix_Struct* p_pm = &Proba_Matrix[i][j];
+            Proba_Matrix_Struct* p_pm_w = &Proba_Matrix_Wit[i][j];
+
+            p_pm_w->Arm1_Weight = p_pm->Arm1_Weight / sum;
+            p_pm_w->Arm2_Weight = p_pm->Arm2_Weight / sum;
+            p_pm_w->Arm3_Weight = p_pm->Arm3_Weight / sum;
+        }
+    }
+}
+
+//更新概率矩阵的累加概率
+void Update_PM_Sum()
+{
+    double sum = 0;//概率累加器
+
+    for (int i = 0; i < X_len; i++)//计算概率矩阵的概率之和
+    {
+        for (int j = 0; j < Y_len; j++)
+        {
+            Proba_Matrix_Struct* p_pm_w = &Proba_Matrix_Wit[i][j];
+            Proba_Matrix_Struct* p_pm_s = &Proba_Matrix_Sum[i][j];
+            sum += p_pm_w->Arm1_Weight;
+            p_pm_s->Arm1_Weight = sum;
+            sum += p_pm_w->Arm2_Weight;
+            p_pm_s->Arm2_Weight = sum;
+            sum += p_pm_w->Arm3_Weight;
+            p_pm_s->Arm3_Weight = sum;
+        }
+    }
+}
+
 //模拟我方一个单位的攻击过程
 void Do_ATK(const int atk_damage, const int unit2_pos) {
     unit2.at(unit2_pos).m_Endurance -= atk_damage;
@@ -281,7 +355,6 @@ void Do_ATK(const int atk_damage, const int unit2_pos) {
         }
     }
 }
-
 
 
 void Unit_Move(){}
@@ -295,24 +368,25 @@ double Start_Game(const int indivi_pos) {
     int sum_damage_1 = 0;
     int sum_damage_2 = 0;
     double fitness = 0;
-    vector<Unit>* p_u1 = &(nowpopulation.at(indivi_pos).Chrom);
-    vector<Unit>* p_u2 = &unit2;
+    vector<Unit>* vp_u1 = &(nowpopulation.at(indivi_pos).Chrom);
+    vector<Unit>* vp_u2 = &unit2;
     Cacula_Unit_Distance(indivi_pos);
     Cacula_Attack_Proba(indivi_pos);
     while (1) {
         k += 10;
-        if (No_Unit_In_Distance() || Unit1_Over(p_u1) || Unit2_Over(p_u2)) {
+        if (No_Unit_In_Distance() || Unit1_Over(vp_u1) || Unit2_Over(vp_u2)) {
             cout << "Indivi[" << indivi_pos << "]Game Over" << endl;
             break;
         }
 
         for (int i = 0; i < Unit_Size; i++) {
             //轮到我方单位i的攻击时刻
-            if (!(k % p_u1->at(i).m_Interval) && (p_u1->at(i).m_Endurance > 0)) {
+            if (!(k % vp_u1->at(i).m_Interval) && (vp_u1->at(i).m_Endurance > 0)) {
                 int atk_pos = Pick_Which_To_ATK(i);
                 if (atk_pos >= 0) {
-                    Do_ATK(p_u1->at(i).m_Attack_Damage, atk_pos);
-                    sum_damage_1 += p_u1->at(i).m_Attack_Damage;
+                    Do_ATK(vp_u1->at(i).m_Attack_Damage, atk_pos);
+                    Add_Proba_Matrix(&(vp_u1->at(i)));
+                    sum_damage_1 += vp_u1->at(i).m_Attack_Damage;
                     
                 }
                 else {
@@ -326,13 +400,13 @@ double Start_Game(const int indivi_pos) {
         
         for (int j = 0; j < Unit_Size; j++) {
             //轮到敌方单位i的攻击时刻
-            if (!(k % p_u2->at(j).m_Interval) && (p_u2->at(j).m_Endurance > 0)) {
+            if (!(k % vp_u2->at(j).m_Interval) && (vp_u2->at(j).m_Endurance > 0)) {
                 while (1) {
                     int atk_pos = rand() % Unit_Size;
-                    if (p_u1->at(atk_pos).m_Endurance > 0 && p_u1->at(atk_pos).m_Attack_Distance >= Cacula[atk_pos][j].Unit_Distance) {
-                        p_u1->at(atk_pos).m_Endurance -= p_u2->at(j).m_Attack_Damage;
-                        sum_damage_2 += p_u2->at(j).m_Attack_Damage;
-                        if (p_u1->at(atk_pos).m_Endurance <= 0) {
+                    if (vp_u1->at(atk_pos).m_Endurance > 0 && vp_u1->at(atk_pos).m_Attack_Distance >= Cacula[atk_pos][j].Unit_Distance) {
+                        vp_u1->at(atk_pos).m_Endurance -= vp_u2->at(j).m_Attack_Damage;
+                        sum_damage_2 += vp_u2->at(j).m_Attack_Damage;
+                        if (vp_u1->at(atk_pos).m_Endurance <= 0) {
                             for (int n = 0; n < Unit_Size; n++) {
                                 Cacula[atk_pos][n].Attack_Proba = 0;
                             }
@@ -375,9 +449,7 @@ void Cacula_Fitness()//计算个体的适应值
 }
 
 
-
-
-void CaculaReFitness()//计算适应值概率
+void CaculaFitnessProba()//计算适应值概率
 {
     double sum = 0;//适应值累加器
     double temp = 0;
@@ -388,69 +460,94 @@ void CaculaReFitness()//计算适应值概率
     for (int j = 0; j < Po_Size; j++)
     {
         temp = nowpopulation.at(j).GetFitness() / sum;//计算概率
-        nowpopulation.at(j).ChaReFitness(temp);//修改个体的适应度概率
+        nowpopulation.at(j).ChaFitnessProba(temp);//修改个体的适应度概率
     }
 }
 
 
-void CalculaSumFitness()//计算累加个体概率
-{
-    double summation = 0;//累加器
-    for (int k = 0; k < Po_Size; k++)
-    {
-        summation += nowpopulation.at(k).GetReFitness();
-        nowpopulation.at(k).ChaSumFitness(summation);//当前累加结果赋值
-    }
-}
+//void CalculaSumFitness()//计算累加个体概率
+//{
+//    double summation = 0;//累加器
+//    for (int k = 0; k < Po_Size; k++)
+//    {
+//        summation += nowpopulation.at(k).GetFitnessProba();
+//        nowpopulation.at(k).ChaSumFitness(summation);//当前累加结果赋值
+//    }
+//}
+
+
 
 void Individual::printout(vector<Individual>::iterator itb, vector<Individual>::iterator ite) {
     int i = 0;
     for (auto it = itb; it != ite; it++, i++) {
         cout << "Indivi[" << i << "]:" << endl;
         cout << '\t' << "fitness=" << it->Fitness;
-        cout << '\t' << "refitness=" << it->ReFitness;
-        cout << '\t' << "sumfitness=" << it->SumFitness << endl;
+        cout << '\t' << "fitness_proba=" << it->Fitness_Proba << endl;
     }
 }
 
 
 
-void seclect() //种群选择
-{
-    //随机生生成0到1的小数
-    double array[Po_Size];//随机数保存变量
-    default_random_engine e(time(0));//引擎，生成随机序列
-    uniform_real_distribution<double> u(0.0, 1.0); //分布
-    for (int i = 0; i < Po_Size; i++)
-        array[i] = u(e);
+void pp() {
+    Update_PM_Wit();
+    Update_PM_Sum();
+    for (int i = 0; i < X_len;i++) {
+        for (int j = 0; j < Y_len; j++) {
+            cout << "Proba_Matrix[" << i << "][" << j << "]:" << endl;
+            cout << '\t' << "Arm1_Weight=" << left << setw(5) << Proba_Matrix[i][j].Arm1_Weight;
+            cout << '\t' << "Arm2_Weight=" << left << setw(5) << Proba_Matrix[i][j].Arm2_Weight;
+            cout << '\t' << "Arm3_Weight=" << left << setw(5) << Proba_Matrix[i][j].Arm3_Weight << endl;
 
-    //轮盘进行选择
-    for (int j = 0; j < Po_Size; j++)
-    {
-        for (int i = 1; i < Po_Size; i++)
-        {
-            if (array[j] < nowpopulation.at(i - 1).GetSumFitness())
-            {
-                midpopulation.push_back(nowpopulation.at(i - 1));//加入到中间种群
-            }
-            if (array[j] >= nowpopulation.at(i - 1).GetSumFitness() && array[j] <= nowpopulation.at(i).GetSumFitness())
-            {
-                midpopulation.push_back(nowpopulation.at(i));//加入到中间种群
-            }
+            cout << '\t' << "Arm1_Wit_Pro=" << left << setw(5) << Proba_Matrix_Wit[i][j].Arm1_Weight;
+            cout << '\t' << "Arm2_Wit_Pro=" << left << setw(5) << Proba_Matrix_Wit[i][j].Arm2_Weight;
+            cout << '\t' << "Arm3_Wit_Pro=" << left << setw(5) << Proba_Matrix_Wit[i][j].Arm3_Weight << endl;
+
+            cout << '\t' << "Arm1_Wit_Sum=" << left << setw(5) << Proba_Matrix_Sum[i][j].Arm1_Weight;
+            cout << '\t' << "Arm2_Wit_Sum=" << left << setw(5) << Proba_Matrix_Sum[i][j].Arm2_Weight;
+            cout << '\t' << "Arm3_Wit_Sum=" << left << setw(5) << Proba_Matrix_Sum[i][j].Arm3_Weight << endl;
         }
     }
-    nowpopulation.clear();//清空nowpopulation
-    
-    //for (int i = 0; i < Po_Size; i++)
-    //{
-    //    nowpopulation.push_back(midpopulation.at(i));
-    //}
-
-    //for (auto it = midpopulation.begin(); it != midpopulation.end(); it++) {
-    //    nowpopulation.push_back(*it);
-    //
-    //}
 }
+
+
+
+
+
+//void seclect() //种群选择
+//{
+//    //随机生生成0到1的小数
+//    double array[Po_Size];//随机数保存变量
+//    default_random_engine e(time(0));//引擎，生成随机序列
+//    uniform_real_distribution<double> u(0.0, 1.0); //分布
+//    for (int i = 0; i < Po_Size; i++)
+//        array[i] = u(e);
+//
+//    //轮盘进行选择
+//    for (int j = 0; j < Po_Size; j++)
+//    {
+//        for (int i = 1; i < Po_Size; i++)
+//        {
+//            if (array[j] < nowpopulation.at(i - 1).GetSumFitness())
+//            {
+//                midpopulation.push_back(nowpopulation.at(i - 1));//加入到中间种群
+//            }
+//            if (array[j] >= nowpopulation.at(i - 1).GetSumFitness() && array[j] <= nowpopulation.at(i).GetSumFitness())
+//            {
+//                midpopulation.push_back(nowpopulation.at(i));//加入到中间种群
+//            }
+//        }
+//    }
+//    nowpopulation.clear();//清空nowpopulation
+//    
+//    
+//}
+
+
+
+
+
+
+
 
 
 double Scand() //随机产生0到1的小数
